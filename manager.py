@@ -13,7 +13,7 @@ minaxes = 30
 minlc = 8
 
 home = None
-theHaulMin = 600
+theHaulMin = 800
 
 def getDistance(coord1, coord2):
 		# return euclidian distance to other coord
@@ -129,9 +129,10 @@ if __name__ == "__main__":
 		if c.lctime > minTimeCutoff and c.lctime < maxTimeCutoff and c.y > minY and c.y <= maxY:
 			lctargs.append(c)
 
-	# TODO::: get troop numbers here, filled in with dummy numbers for testing
+	#get troop numbers here 
 
-	args = []
+	oldid = 18518
+	args = [oldid]
 	p = subprocess.Popen(['osascript', 'getUnitCounts.scpt'] + [str(arg) for arg in args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	bigstring, err = p.communicate()
@@ -183,7 +184,7 @@ if __name__ == "__main__":
 
 		# display the summary and see if okay with user :)
 		print "to occur: \t\tspears\taxes\tlc\thaul\taxetime"
-		for c in lctargs:
+		for c in axetargs + lctargs:
 			s = ""
 			if c.toSend:
 				s += "   x\t"
@@ -216,7 +217,7 @@ if __name__ == "__main__":
 			c.sent = True
 			c.display()
 
-			args = [c.spears, c.swords, c.axes, c.lc, c.x, c.y]
+			args = [oldid, c.spears, c.swords, c.axes, c.lc, 0, c.x, c.y]
 			p = subprocess.Popen(['osascript', 'sendUnits.scpt'] + [str(arg) for arg in args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 			out, err = p.communicate()
