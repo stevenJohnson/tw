@@ -28,7 +28,9 @@ def getDistance(coord1, coord2):
 class farmer:
 	""" utility class for the villages from which to farm"""
 
-	def __init__(self, x, y, id):
+	def __init__(self, x, y, id, name):
+		self.formatedname = name + (" " * (30-len(name)))
+		self.name = name
 		self.x = int(x)
 		self.y = int(y)
 		self.id = int(id)
@@ -45,7 +47,7 @@ class farmer:
 		self.maxTimeCutoff = 0
 
 	def display(self):
-		print "farmer: " + str(self.x) + "|" + str(self.y) + "  id: " + str(self.id)
+		print "farmer:  " + str(self.formatedname) + " (" + str(self.x) + "|" + str(self.y) + ")  id: " + str(self.id)
 
 class coordinate:
 	""" vill coordinate utility class """
@@ -94,7 +96,7 @@ def readCoordinates(filename):
 	
 	for str in s:
 		str = str.split("|")
-		farmers.append(farmer(str[0],str[1],str[2]))
+		farmers.append(farmer(str[0],str[1],str[2],str[3]))
 	
 	print " "
 	for h in farmers:
@@ -112,7 +114,7 @@ def readCoordinates(filename):
 
 
 def findTroopRatio(haulA, haulB, countA, countB, minB, fullHaul):
-	if fullHaul == 0:
+	if fullHaul < theHaulMin:
 		fullHaul = theHaulMin #TODO::: may want to change the default raid size
 	aToSend = 0
 	bToSend = minB
@@ -166,9 +168,9 @@ if __name__ == "__main__":
 	(speccoordinates, coordinates) = readCoordinates(sys.argv[1])
 
 	for f in farmers:
-		x = input("enter min time for " + str(f.x) + "|" + str(f.y) + ":  ")
+		x = input("enter min time for " + str(f.formatedname))
 		f.minTimeCutoff = x
-		x = input("enter max time for " + str(f.x) + "|" + str(f.y) + ":  ")
+		x = input("enter max time for " + str(f.formatedname))
 		f.maxTimeCutoff = x
 
 	print ""
@@ -215,24 +217,25 @@ if __name__ == "__main__":
 	#get troop numbers here
 	print "\tspears\taxes\tswords\tlc\thc"
 	for f in farmers:
-		args = [f.id]
-		p = subprocess.Popen(['osascript', 'getUnitCounts.scpt'] + [str(arg) for arg in args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		if f.maxTimeCutoff > 0:
+			args = [f.id]
+			p = subprocess.Popen(['osascript', 'getUnitCounts.scpt'] + [str(arg) for arg in args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-		bigstring, err = p.communicate()
-		
-		m = re.search("<tr>\s*<td>From this village</td>\s*(.+)\s*</tr>", bigstring)
-		if m:
-			units = m.group(1)
-			listy = re.findall(r'\d+', units)
-		else:
-			print "missed"
+			bigstring, err = p.communicate()
+			
+			m = re.search("<tr>\s*<td>From this village</td>\s*(.+)\s*</tr>", bigstring)
+			if m:
+				units = m.group(1)
+				listy = re.findall(r'\d+', units)
+			else:
+				print "missed"
 
-		f.spearCount = int(listy[0])
-		f.swordCount = int(listy[1])
-		f.axeCount = int(listy[2])
-		f.lcCount = int(listy[4])
-		f.hcCount = int(listy[5])
-		print str(f.x)+"|"+str(f.y)+":",f.spearCount,"\t",f.axeCount,"\t",f.swordCount,"\t",f.lcCount,"\t",f.hcCount
+			f.spearCount = int(listy[0])
+			f.swordCount = int(listy[1])
+			f.axeCount = int(listy[2])
+			f.lcCount = int(listy[4])
+			f.hcCount = int(listy[5])
+			print str(f.x)+"|"+str(f.y)+":",f.spearCount,"\t",f.axeCount,"\t",f.swordCount,"\t",f.lcCount,"\t",f.hcCount
 
 
 	for f in farmers:
@@ -295,7 +298,7 @@ if __name__ == "__main__":
 			
 
 			# display the summary and see if okay with user :)
-			print "\n\n" + str(f.x) + "|" + str(f.y)
+			print "\n\n" + str(f.name)
 			print "to occur: \t\tspears\taxes\tswords\tlc\thc"
 			counter = 0
 			for c in speccoordinates + coordinates:
@@ -331,7 +334,7 @@ if __name__ == "__main__":
 
 	x = input("ready to send? ")
 
-	for f in farmers:
+	for f in reversed(farmers):
 		for c in speccoordinates + coordinates:
 			if c.sender == f.id and c.toSend and not c.sent:
 				c.sent = True
